@@ -5,6 +5,11 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <RootNamespace>LexoRank.Test</RootNamespace>
     </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\LexoRank.Core\LexoRank.Core.csproj" />
+    </ItemGroup>
 
 </Project>
