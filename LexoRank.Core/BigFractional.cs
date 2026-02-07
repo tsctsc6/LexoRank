@@ -1,0 +1,94 @@
+﻿using System.Numerics;
+
+namespace LexoRank.Core;
+
+/// <summary>
+/// Represents a fractional, which value is numerator / (denominatorBase * denominatorExponent)
+/// Special design was made to accommodate LexoRank.
+/// In LexoRank, treat strings as fractional.
+/// The denominator of this fractional are always denominatorBase * denominatorExponent, denominatorBase is always same at the same application.
+/// This fractional are only have two operations: plus and divide by 2.
+/// </summary>
+public readonly struct BigFractional
+{
+    /// <summary>
+    /// Represents a fractional, which value is numerator / (denominatorBase * denominatorExponent)
+    /// </summary>
+    /// <param name="numerator"></param>
+    /// <param name="denominatorBase"></param>
+    /// <param name="denominatorExponent"></param>
+    /// <exception cref="NotFiniteNumberException"></exception>
+    public BigFractional(BigInteger numerator, ulong denominatorBase, ulong denominatorExponent)
+    {
+        if (denominatorBase == BigInteger.Zero)
+        {
+            throw new NotFiniteNumberException();
+        }
+        Numerator = numerator;
+        DenominatorBase = denominatorBase;
+        DenominatorExponent = denominatorExponent;
+    }
+
+    public BigInteger Numerator { get; }
+    public ulong DenominatorBase { get; }
+    public ulong DenominatorExponent { get; }
+
+    public static BigFractional operator +(BigFractional a, BigFractional b)
+    {
+        if (a.DenominatorBase != b.DenominatorBase)
+        {
+            throw new ArgumentException("a.DenominatorBase != b.DenominatorBase");
+        }
+
+        if (a.DenominatorExponent == b.DenominatorExponent)
+        {
+            return new BigFractional(
+                a.Numerator + b.Numerator,
+                a.DenominatorBase,
+                b.DenominatorExponent
+            );
+        }
+
+        if (a.DenominatorExponent < b.DenominatorExponent)
+        {
+            return b + a;
+        }
+
+        // a.DenominatorExponent > b.DenominatorExponent
+        var baseTimesExponent = BigInteger.One;
+        var denominatorBase = new BigInteger(a.DenominatorBase);
+        for (ulong i = 0; i < (a.DenominatorExponent - b.DenominatorExponent); i++)
+        {
+            baseTimesExponent *= denominatorBase;
+        }
+        var b2 = new BigFractional(
+            b.Numerator * baseTimesExponent,
+            a.DenominatorBase,
+            a.DenominatorExponent
+        );
+
+        return new BigFractional(
+            a.Numerator + b2.Numerator,
+            a.DenominatorBase,
+            a.DenominatorExponent
+        );
+    }
+
+    public BigFractional DivideByTwo()
+    {
+        var numerator = Numerator * DenominatorBase / 2;
+
+        // Eliminate trailing zeros
+        var i = DenominatorExponent + 1;
+        while (i > 0)
+        {
+            var (quotient, remainder) = BigInteger.DivRem(numerator, DenominatorBase);
+            if (remainder != 0)
+                break;
+            numerator = quotient;
+            i--;
+        }
+
+        return new BigFractional(numerator, DenominatorBase, i);
+    }
+}
