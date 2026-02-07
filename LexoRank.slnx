@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="LexoRank.Core/LexoRank.Core.csproj" />
+  <Project Path="LexoRank.Test/LexoRank.Test.csproj" />
+</Solution>
