@@ -10,8 +10,6 @@ public class LexoRankManager
 
     public ulong BaseNumber { get; init; } = 0;
 
-    public LexoRankManager() { }
-
     public LexoRankManager(string characterSet)
     {
         BigIntegerToCharacterMap = characterSet.ToCharArray();
