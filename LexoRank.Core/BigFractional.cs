@@ -18,11 +18,15 @@ public readonly struct BigFractional
     /// <param name="denominatorBase"></param>
     /// <param name="denominatorExponent"></param>
     /// <exception cref="NotFiniteNumberException"></exception>
-    public BigFractional(BigInteger numerator, ulong denominatorBase, ulong denominatorExponent)
+    public BigFractional(BigInteger numerator, int denominatorBase, int denominatorExponent)
     {
-        if (denominatorBase == BigInteger.Zero)
+        if (denominatorBase == 0)
         {
             throw new NotFiniteNumberException();
+        }
+        if (denominatorBase < 0)
+        {
+            throw new ArgumentException("denominatorBase < 0");
         }
         Numerator = numerator;
         DenominatorBase = denominatorBase;
@@ -30,8 +34,8 @@ public readonly struct BigFractional
     }
 
     public BigInteger Numerator { get; }
-    public ulong DenominatorBase { get; }
-    public ulong DenominatorExponent { get; }
+    public int DenominatorBase { get; }
+    public int DenominatorExponent { get; }
 
     public static BigFractional operator +(BigFractional a, BigFractional b)
     {

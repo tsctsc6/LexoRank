@@ -8,7 +8,7 @@ public class LexoRankManager
     public FrozenDictionary<char, BigInteger> CharacterToBigIntegerMap { get; init; }
     public char[] BigIntegerToCharacterMap { get; init; }
 
-    public ulong BaseNumber { get; init; } = 0;
+    public int BaseNumber { get; init; } = 0;
 
     public LexoRankManager(string characterSet)
     {
@@ -19,7 +19,7 @@ public class LexoRankManager
             characterSet2.Add(character, index);
         }
         CharacterToBigIntegerMap = characterSet2.ToFrozenDictionary();
-        BaseNumber = (ulong)characterSet2.Count;
+        BaseNumber = characterSet2.Count;
     }
 
     public string Between(string prev, string next)
@@ -52,7 +52,7 @@ public class LexoRankManager
             numerator += charValue * baseTimesExponent;
             baseTimesExponent *= baseNumberBigInt;
         }
-        return new BigFractional(numerator, BaseNumber, (ulong)str.Length);
+        return new BigFractional(numerator, BaseNumber, str.Length);
     }
 
     private string GetLexoRankStringFromBigFractional(BigFractional bigFractional)
