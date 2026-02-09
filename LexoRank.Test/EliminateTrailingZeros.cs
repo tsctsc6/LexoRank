@@ -9,7 +9,7 @@ public class EliminateTrailingZeros
     [Fact]
     public void Normal()
     {
-        var lexoRankManager = new LexoRankManager("0123456789");
+        var lexoRankManager = new LexoRankManager(CommonCharacterSets.Digits);
         var sortedValue = lexoRankManager.Between("10721", "29279").Unwrap();
         Assert.Equal("2", sortedValue);
         var sortedList = new SortedDictionary<string, int>

@@ -7,7 +7,7 @@ public class InsertMuti
     [Fact]
     public void Normal()
     {
-        var lexoRankManager = new LexoRankManager("0123456789");
+        var lexoRankManager = new LexoRankManager(CommonCharacterSets.Digits);
         var sortedList = new SortedDictionary<string, int>();
         var sortedValue = string.Empty;
         for (var i = 0; i < 100; i++)

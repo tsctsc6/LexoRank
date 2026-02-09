@@ -7,7 +7,7 @@ public class InsertPrev
     [Fact]
     public void Normal()
     {
-        var lexoRankManager = new LexoRankManager("0123456789");
+        var lexoRankManager = new LexoRankManager(CommonCharacterSets.Digits);
         var sortedList = new SortedDictionary<string, int>();
         var sortedValue0 = lexoRankManager.Between(string.Empty, string.Empty).Unwrap();
         sortedList.Add(sortedValue0, 0);
