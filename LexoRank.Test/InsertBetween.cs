@@ -9,11 +9,11 @@ public class InsertBetween
     {
         var lexoRankManager = new LexoRankManager("0123456789");
         var sortedList = new SortedDictionary<string, int>();
-        var sortedValue0 = lexoRankManager.Between(string.Empty, string.Empty);
+        var sortedValue0 = lexoRankManager.Between(string.Empty, string.Empty).Unwrap();
         sortedList.Add(sortedValue0, 0);
-        var sortedValue1 = lexoRankManager.Between(sortedValue0, string.Empty);
+        var sortedValue1 = lexoRankManager.Between(sortedValue0, string.Empty).Unwrap();
         sortedList.Add(sortedValue1, 1);
-        var sortedValue2 = lexoRankManager.Between(sortedValue0, sortedValue1);
+        var sortedValue2 = lexoRankManager.Between(sortedValue0, sortedValue1).Unwrap();
         sortedList.Add(sortedValue2, 2);
         var sortedArray = sortedList.ToArray();
         Assert.Equal(0, sortedArray[0].Value);
