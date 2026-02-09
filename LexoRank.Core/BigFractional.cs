@@ -55,14 +55,12 @@ public readonly struct BigFractional
         }
 
         // a.DenominatorExponent > b.DenominatorExponent
-        var baseTimesExponent = BigInteger.One;
-        var denominatorBase = new BigInteger(a.DenominatorBase);
-        for (ulong i = 0; i < (a.DenominatorExponent - b.DenominatorExponent); i++)
-        {
-            baseTimesExponent *= denominatorBase;
-        }
+        var multiplier = BigInteger.Pow(
+            a.DenominatorBase,
+            (int)(a.DenominatorExponent - b.DenominatorExponent)
+        );
         var b2 = new BigFractional(
-            b.Numerator * baseTimesExponent,
+            b.Numerator * multiplier,
             a.DenominatorBase,
             a.DenominatorExponent
         );
