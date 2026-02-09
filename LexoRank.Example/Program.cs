@@ -9,7 +9,8 @@ var sortedValue = string.Empty;
 for (var i = 0; i < 10; i++)
 {
     // sortedValue = lexoRankManager.Between(sortedValue, string.Empty);
-    sortedValue = lexoRankManager.Between(string.Empty, sortedValue);
+    var sortedValueResult = lexoRankManager.Between(string.Empty, sortedValue);
+    sortedValue = sortedValueResult.Unwrap();
     sortedList.Add(sortedValue, $"item{i}");
 }
 

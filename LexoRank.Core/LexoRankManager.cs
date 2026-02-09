@@ -1,5 +1,7 @@
 ﻿using System.Collections.Frozen;
 using System.Numerics;
+using LexoRank.Core.Errors;
+using RustSharp;
 
 namespace LexoRank.Core;
 
@@ -22,19 +24,56 @@ public class LexoRankManager
         BaseNumber = characterSet2.Count;
     }
 
-    public string Between(string prev, string next)
+    public Result<string, List<Error>> Between(string prev, string next)
     {
-        var prevBigFractional = string.IsNullOrEmpty(prev)
-            ? new BigFractional(0, BaseNumber, 0)
+        var prevBigFractionalResult = string.IsNullOrEmpty(prev)
+            ? BigFractional.Create(0, BaseNumber, 0)
             : GetBigFractionalFromLexoRankString(prev);
-        var nextBigFractional = string.IsNullOrEmpty(next)
-            ? new BigFractional(1, BaseNumber, 0)
+        var nextBigFractionalResult = string.IsNullOrEmpty(next)
+            ? BigFractional.Create(1, BaseNumber, 0)
             : GetBigFractionalFromLexoRankString(next);
-        var meanBigFractional = (prevBigFractional + nextBigFractional).DivideByTwo();
-        return GetLexoRankStringFromBigFractional(meanBigFractional);
+        var prevBigFractional = BigFractional.Zero;
+        switch (prevBigFractionalResult)
+        {
+            case ErrResult<BigFractional, List<Error>> errResult:
+                errResult.Value.Add(
+                    new LexoRankFormatError($"Can't parse the prev, which value is \"{prev}\"")
+                );
+                return Result.Err(errResult.Value);
+                break;
+            case OkResult<BigFractional, List<Error>> okResult:
+                prevBigFractional = okResult.Value;
+                break;
+        }
+        var nextBigFractional = BigFractional.One;
+        switch (nextBigFractionalResult)
+        {
+            case ErrResult<BigFractional, List<Error>> errResult:
+                errResult.Value.Add(
+                    new LexoRankFormatError($"Can't parse the next, which value is \"{next}\"")
+                );
+                return Result.Err(errResult.Value);
+                break;
+            case OkResult<BigFractional, List<Error>> okResult:
+                nextBigFractional = okResult.Value;
+                break;
+        }
+        var meanBigFractionalResult = BigFractional.Average(prevBigFractional, nextBigFractional);
+        var meanBigFractional = BigFractional.Zero;
+        switch (meanBigFractionalResult)
+        {
+            case ErrResult<BigFractional, List<Error>> errResult:
+                errResult.Value.Add(new CalculateLexoRankError(string.Empty));
+                return Result.Err(errResult.Value);
+                break;
+            case OkResult<BigFractional, List<Error>> okResult:
+                meanBigFractional = okResult.Value;
+                break;
+        }
+        return Result.Ok(GetLexoRankStringFromBigFractional(meanBigFractional));
     }
 
-    private BigFractional GetBigFractionalFromLexoRankString(string str)
+    private Result<BigFractional, List<Error>> GetBigFractionalFromLexoRankString(string str)
     {
         var numerator = BigInteger.Zero;
         var baseTimesExponent = BigInteger.One;
@@ -45,14 +84,18 @@ public class LexoRankManager
         {
             if (!CharacterToBigIntegerMap.TryGetValue(character, out var charValue))
             {
-                throw new InvalidOperationException(
-                    $"Character '{character}' does not exist in CharacterSet."
+                return Result.Err(
+                    new List<Error>([
+                        new CharacterNotExistError(
+                            $"Character '{character}' does not exist in CharacterSet."
+                        ),
+                    ])
                 );
             }
             numerator += charValue * baseTimesExponent;
             baseTimesExponent *= baseNumberBigInt;
         }
-        return new BigFractional(numerator, BaseNumber, str.Length);
+        return BigFractional.Create(numerator, BaseNumber, str.Length);
     }
 
     private string GetLexoRankStringFromBigFractional(BigFractional bigFractional)

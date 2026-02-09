@@ -1,4 +1,6 @@
 ﻿using System.Numerics;
+using LexoRank.Core.Errors;
+using RustSharp;
 
 namespace LexoRank.Core;
 
@@ -18,50 +20,66 @@ public readonly struct BigFractional
     /// <param name="denominatorBase"></param>
     /// <param name="denominatorExponent"></param>
     /// <exception cref="NotFiniteNumberException"></exception>
-    public BigFractional(BigInteger numerator, int denominatorBase, int denominatorExponent)
+    private BigFractional(BigInteger numerator, int denominatorBase, int denominatorExponent)
     {
-        if (denominatorBase == 0)
-        {
-            throw new NotFiniteNumberException();
-        }
-        if (denominatorBase < 0)
-        {
-            throw new ArgumentException("denominatorBase < 0");
-        }
         Numerator = numerator;
         DenominatorBase = denominatorBase;
         DenominatorExponent = denominatorExponent;
     }
 
+    public static Result<BigFractional, List<Error>> Create(
+        BigInteger numerator,
+        int denominatorBase,
+        int denominatorExponent
+    )
+    {
+        return denominatorBase switch
+        {
+            <= 0 => Result.Err(new List<Error>([new NotFiniteNumberError(string.Empty)])),
+            _ => Result.Ok(new BigFractional(numerator, denominatorBase, denominatorExponent)),
+        };
+    }
+
+    public static BigFractional Zero => new BigFractional(0, 1, 0);
+    public static BigFractional One => new BigFractional(1, 1, 0);
+
     public BigInteger Numerator { get; }
     public int DenominatorBase { get; }
     public int DenominatorExponent { get; }
 
-    public static BigFractional operator +(BigFractional a, BigFractional b)
+    public static Result<BigFractional, List<Error>> TryAdd(BigFractional a, BigFractional b)
     {
         if (a.DenominatorBase != b.DenominatorBase)
         {
-            throw new ArgumentException("a.DenominatorBase != b.DenominatorBase");
+            return Result.Err(
+                new List<Error>([
+                    new DenominatorBaseDifferenceError(
+                        $"a.DenominatorBase = {a.DenominatorBase}, b.DenominatorBase = {b.DenominatorBase}"
+                    ),
+                ])
+            );
         }
 
         if (a.DenominatorExponent == b.DenominatorExponent)
         {
-            return new BigFractional(
-                a.Numerator + b.Numerator,
-                a.DenominatorBase,
-                b.DenominatorExponent
+            return Result.Ok(
+                new BigFractional(
+                    a.Numerator + b.Numerator,
+                    a.DenominatorBase,
+                    b.DenominatorExponent
+                )
             );
         }
 
         if (a.DenominatorExponent < b.DenominatorExponent)
         {
-            return b + a;
+            return TryAdd(b, a);
         }
 
         // a.DenominatorExponent > b.DenominatorExponent
         var multiplier = BigInteger.Pow(
             a.DenominatorBase,
-            (int)(a.DenominatorExponent - b.DenominatorExponent)
+            a.DenominatorExponent - b.DenominatorExponent
         );
         var b2 = new BigFractional(
             b.Numerator * multiplier,
@@ -69,10 +87,8 @@ public readonly struct BigFractional
             a.DenominatorExponent
         );
 
-        return new BigFractional(
-            a.Numerator + b2.Numerator,
-            a.DenominatorBase,
-            a.DenominatorExponent
+        return Result.Ok(
+            new BigFractional(a.Numerator + b2.Numerator, a.DenominatorBase, a.DenominatorExponent)
         );
     }
 
@@ -92,5 +108,21 @@ public readonly struct BigFractional
         }
 
         return new BigFractional(numerator, DenominatorBase, i);
+    }
+
+    public static Result<BigFractional, List<Error>> Average(BigFractional a, BigFractional b)
+    {
+        var sumResult = TryAdd(a, b);
+        var sum = BigFractional.Zero;
+        switch (sumResult)
+        {
+            case ErrResult<BigFractional, List<Error>> errResult:
+                errResult.Value.Add(new CalculateAverageError(string.Empty));
+                break;
+            case OkResult<BigFractional, List<Error>> okResult:
+                sum = okResult.Value;
+                break;
+        }
+        return Result.Ok(sum.DivideByTwo());
     }
 }
