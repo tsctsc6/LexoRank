@@ -10,9 +10,9 @@ public class LexoRankManager
 
     public int BaseNumber { get; init; } = 0;
 
-    public LexoRankManager(string characterSet)
+    public LexoRankManager(ReadOnlySpan<char> characterSet)
     {
-        BigIntegerToCharacterMap = characterSet.ToCharArray();
+        BigIntegerToCharacterMap = characterSet.ToArray();
         var characterSet2 = new Dictionary<char, BigInteger>();
         foreach (var (index, character) in BigIntegerToCharacterMap.Index())
         {
