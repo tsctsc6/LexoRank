@@ -13,7 +13,7 @@ public class MyBenchmark
     {
         var sortedValue0 = "nopSDGpa51g6f1asd3g13SDFGf65g1a3dgfE345FGYMNPM0mlm";
         var sortedValue1 = "56145fSFD6A6D161ASD41fa6df19ADF61fa66asdf44tas233";
-        _ = _lexoRankManager.Between(sortedValue0, sortedValue1).Unwrap();
+        _ = _lexoRankManager.Between(sortedValue0, sortedValue1);
     }
 }
 

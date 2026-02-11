@@ -8,7 +8,7 @@ public class Init
     public void Normal()
     {
         var lexoRankManager = new LexoRankManager(CommonCharacterSets.Digits);
-        var sortedValue = lexoRankManager.Between(string.Empty, string.Empty).Unwrap();
+        var sortedValue = lexoRankManager.Between(string.Empty, string.Empty);
         Assert.Equal("5", sortedValue);
     }
 }

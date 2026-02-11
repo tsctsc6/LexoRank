@@ -9,9 +9,9 @@ public class InsertNext
     {
         var lexoRankManager = new LexoRankManager(CommonCharacterSets.Digits);
         var sortedList = new SortedDictionary<string, int>();
-        var sortedValue0 = lexoRankManager.Between(string.Empty, string.Empty).Unwrap();
+        var sortedValue0 = lexoRankManager.Between(string.Empty, string.Empty);
         sortedList.Add(sortedValue0, 0);
-        var sortedValue1 = lexoRankManager.Between(sortedValue0, string.Empty).Unwrap();
+        var sortedValue1 = lexoRankManager.Between(sortedValue0, string.Empty);
         sortedList.Add(sortedValue1, 1);
         var sortedArray = sortedList.ToArray();
         Assert.Equal(0, sortedArray[0].Value);

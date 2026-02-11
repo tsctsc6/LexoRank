@@ -1,7 +1,5 @@
 ﻿using System.Collections.Frozen;
 using System.Numerics;
-using LexoRank.Core.Errors;
-using RustSharp;
 
 namespace LexoRank.Core;
 
@@ -24,56 +22,19 @@ public class LexoRankManager
         BaseNumber = characterSet2.Count;
     }
 
-    public Result<string, List<Error>> Between(string prev, string next)
+    public string Between(string prev, string next)
     {
-        var prevBigFractionalResult = string.IsNullOrEmpty(prev)
+        var prevBigFractional = string.IsNullOrEmpty(prev)
             ? BigFractional.Create(0, BaseNumber, 0)
             : GetBigFractionalFromLexoRankString(prev);
-        var nextBigFractionalResult = string.IsNullOrEmpty(next)
+        var nextBigFractional = string.IsNullOrEmpty(next)
             ? BigFractional.Create(1, BaseNumber, 0)
             : GetBigFractionalFromLexoRankString(next);
-        var prevBigFractional = BigFractional.Zero;
-        switch (prevBigFractionalResult)
-        {
-            case ErrResult<BigFractional, List<Error>> errResult:
-                errResult.Value.Add(
-                    new LexoRankFormatError($"Can't parse the prev, which value is \"{prev}\"")
-                );
-                return Result.Err(errResult.Value);
-                break;
-            case OkResult<BigFractional, List<Error>> okResult:
-                prevBigFractional = okResult.Value;
-                break;
-        }
-        var nextBigFractional = BigFractional.One;
-        switch (nextBigFractionalResult)
-        {
-            case ErrResult<BigFractional, List<Error>> errResult:
-                errResult.Value.Add(
-                    new LexoRankFormatError($"Can't parse the next, which value is \"{next}\"")
-                );
-                return Result.Err(errResult.Value);
-                break;
-            case OkResult<BigFractional, List<Error>> okResult:
-                nextBigFractional = okResult.Value;
-                break;
-        }
-        var meanBigFractionalResult = BigFractional.Average(prevBigFractional, nextBigFractional);
-        var meanBigFractional = BigFractional.Zero;
-        switch (meanBigFractionalResult)
-        {
-            case ErrResult<BigFractional, List<Error>> errResult:
-                errResult.Value.Add(new CalculateLexoRankError(string.Empty));
-                return Result.Err(errResult.Value);
-                break;
-            case OkResult<BigFractional, List<Error>> okResult:
-                meanBigFractional = okResult.Value;
-                break;
-        }
-        return Result.Ok(GetLexoRankStringFromBigFractional(meanBigFractional));
+        var meanBigFractional = BigFractional.Average(prevBigFractional, nextBigFractional);
+        return GetLexoRankStringFromBigFractional(meanBigFractional);
     }
 
-    private Result<BigFractional, List<Error>> GetBigFractionalFromLexoRankString(string str)
+    private BigFractional GetBigFractionalFromLexoRankString(string str)
     {
         var numerator = BigInteger.Zero;
         var baseTimesExponent = BigInteger.One;
@@ -84,12 +45,8 @@ public class LexoRankManager
         {
             if (!CharacterToBigIntegerMap.TryGetValue(character, out var charValue))
             {
-                return Result.Err(
-                    new List<Error>([
-                        new CharacterNotExistError(
-                            $"Character '{character}' does not exist in CharacterSet."
-                        ),
-                    ])
+                throw new ArgumentException(
+                    $"Character '{character}' does not exist in CharacterSet."
                 );
             }
             numerator += charValue * baseTimesExponent;

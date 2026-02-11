@@ -1,6 +1,4 @@
 ﻿using System.Numerics;
-using LexoRank.Core.Errors;
-using RustSharp;
 
 namespace LexoRank.Core;
 
@@ -27,17 +25,18 @@ public readonly struct BigFractional
         DenominatorExponent = denominatorExponent;
     }
 
-    public static Result<BigFractional, List<Error>> Create(
+    public static BigFractional Create(
         BigInteger numerator,
         int denominatorBase,
         int denominatorExponent
     )
     {
-        return denominatorBase switch
+        if (denominatorBase <= 0)
         {
-            <= 0 => Result.Err(new List<Error>([new NotFiniteNumberError(string.Empty)])),
-            _ => Result.Ok(new BigFractional(numerator, denominatorBase, denominatorExponent)),
-        };
+            throw new ArgumentException("DenominatorBase must be greater than or equal to 0.");
+        }
+
+        return new BigFractional(numerator, denominatorBase, denominatorExponent);
     }
 
     public static BigFractional Zero => new BigFractional(0, 1, 0);
@@ -47,33 +46,27 @@ public readonly struct BigFractional
     public int DenominatorBase { get; }
     public int DenominatorExponent { get; }
 
-    public static Result<BigFractional, List<Error>> TryAdd(BigFractional a, BigFractional b)
+    public static BigFractional operator +(BigFractional a, BigFractional b)
     {
         if (a.DenominatorBase != b.DenominatorBase)
         {
-            return Result.Err(
-                new List<Error>([
-                    new DenominatorBaseDifferenceError(
-                        $"a.DenominatorBase = {a.DenominatorBase}, b.DenominatorBase = {b.DenominatorBase}"
-                    ),
-                ])
+            throw new ArgumentException(
+                $"a.DenominatorBase = {a.DenominatorBase}, b.DenominatorBase = {b.DenominatorBase}"
             );
         }
 
         if (a.DenominatorExponent == b.DenominatorExponent)
         {
-            return Result.Ok(
-                new BigFractional(
-                    a.Numerator + b.Numerator,
-                    a.DenominatorBase,
-                    b.DenominatorExponent
-                )
+            return new BigFractional(
+                a.Numerator + b.Numerator,
+                a.DenominatorBase,
+                b.DenominatorExponent
             );
         }
 
         if (a.DenominatorExponent < b.DenominatorExponent)
         {
-            return TryAdd(b, a);
+            return b + a;
         }
 
         // a.DenominatorExponent > b.DenominatorExponent
@@ -87,8 +80,10 @@ public readonly struct BigFractional
             a.DenominatorExponent
         );
 
-        return Result.Ok(
-            new BigFractional(a.Numerator + b2.Numerator, a.DenominatorBase, a.DenominatorExponent)
+        return new BigFractional(
+            a.Numerator + b2.Numerator,
+            a.DenominatorBase,
+            a.DenominatorExponent
         );
     }
 
@@ -110,19 +105,9 @@ public readonly struct BigFractional
         return new BigFractional(numerator, DenominatorBase, i);
     }
 
-    public static Result<BigFractional, List<Error>> Average(BigFractional a, BigFractional b)
+    public static BigFractional Average(BigFractional a, BigFractional b)
     {
-        var sumResult = TryAdd(a, b);
-        var sum = BigFractional.Zero;
-        switch (sumResult)
-        {
-            case ErrResult<BigFractional, List<Error>> errResult:
-                errResult.Value.Add(new CalculateAverageError(string.Empty));
-                break;
-            case OkResult<BigFractional, List<Error>> okResult:
-                sum = okResult.Value;
-                break;
-        }
-        return Result.Ok(sum.DivideByTwo());
+        var sum = a + b;
+        return sum.DivideByTwo();
     }
 }

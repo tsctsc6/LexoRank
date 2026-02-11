@@ -1,6 +1,4 @@
 ﻿using LexoRank.Core;
-using LexoRank.Core.Errors;
-using RustSharp;
 
 namespace LexoRank.Test;
 
@@ -10,7 +8,7 @@ public class EliminateTrailingZeros
     public void Normal()
     {
         var lexoRankManager = new LexoRankManager(CommonCharacterSets.Digits);
-        var sortedValue = lexoRankManager.Between("10721", "29279").Unwrap();
+        var sortedValue = lexoRankManager.Between("10721", "29279");
         Assert.Equal("2", sortedValue);
         var sortedList = new SortedDictionary<string, int>
         {

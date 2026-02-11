@@ -1,6 +1,4 @@
 ﻿using LexoRank.Core;
-using LexoRank.Core.Errors;
-using RustSharp;
 
 namespace LexoRank.Test;
 
@@ -10,15 +8,14 @@ public class InvalidLexoRankString
     public void Normal()
     {
         var lexoRankManager = new LexoRankManager(CommonCharacterSets.Digits);
-        var result = lexoRankManager.Between("abc", string.Empty);
-        switch (result)
+        try
         {
-            case ErrResult<string, List<Error>>:
-                Assert.True(true);
-                break;
-            default:
-                Assert.Fail();
-                break;
+            _ = lexoRankManager.Between("abc", string.Empty);
+            Assert.Fail();
+        }
+        catch (ArgumentException)
+        {
+            Assert.True(true);
         }
     }
 }
