@@ -6,15 +6,15 @@ namespace LexoRank.Core;
 public class LexoRankManager
 {
     public FrozenDictionary<char, BigInteger> CharacterToBigIntegerMap { get; init; }
-    public char[] BigIntegerToCharacterMap { get; init; }
+    public char[] IntToCharacterMap { get; init; }
 
     public int BaseNumber { get; init; } = 0;
 
     public LexoRankManager(ReadOnlySpan<char> characterSet)
     {
-        BigIntegerToCharacterMap = characterSet.ToArray();
+        IntToCharacterMap = characterSet.ToArray();
         var characterSet2 = new Dictionary<char, BigInteger>();
-        foreach (var (index, character) in BigIntegerToCharacterMap.Index())
+        foreach (var (index, character) in IntToCharacterMap.Index())
         {
             characterSet2.Add(character, index);
         }
@@ -55,7 +55,7 @@ public class LexoRankManager
         return BigFractional.Create(numerator, BaseNumber, str.Length);
     }
 
-    private string GetLexoRankStringFromBigFractional(BigFractional bigFractional)
+    internal string GetLexoRankStringFromBigFractional(BigFractional bigFractional)
     {
         var charArray = new char[bigFractional.DenominatorExponent];
         var baseNumberBigInt = new BigInteger(BaseNumber);
@@ -65,7 +65,7 @@ public class LexoRankManager
             var (quotient, remainder) = BigInteger.DivRem(numerator, baseNumberBigInt);
             numerator = quotient;
             // remainder always less than BaseNumber
-            charArray[i] = BigIntegerToCharacterMap[(ulong)remainder];
+            charArray[i] = IntToCharacterMap[(ulong)remainder];
         }
         return new string(charArray);
     }

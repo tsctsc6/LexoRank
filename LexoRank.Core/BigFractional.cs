@@ -110,4 +110,9 @@ public readonly struct BigFractional
         var sum = a + b;
         return sum.DivideByTwo();
     }
+
+    public bool IsGreaterThanOrEqualToOne()
+    {
+        return Numerator >= BigInteger.Pow(DenominatorBase, DenominatorExponent);
+    }
 }
