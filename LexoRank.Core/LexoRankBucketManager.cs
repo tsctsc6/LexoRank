@@ -14,7 +14,7 @@ public class LexoRankBucketManager
 
     public string NextBucket { get; set; } = string.Empty;
 
-    private bool _isDesc = true;
+    public bool IsDesc { get; private set; } = true;
 
     private BigFractional _stepSize = BigFractional.One;
 
@@ -61,7 +61,7 @@ public class LexoRankBucketManager
         var index = Buckets.IndexOf(CurrentBucket);
         if (index == -1)
             return false;
-        _isDesc = index != Buckets.Length - 1;
+        IsDesc = index != Buckets.Length - 1;
         NextBucket = Buckets[(index + 1) % Buckets.Length];
 
         var averageProportionInt = (int)(LexoRankManager.BaseNumber * averageProportion);
@@ -73,11 +73,15 @@ public class LexoRankBucketManager
 
         var step =
             BigInteger.Pow(LexoRankManager.BaseNumber, exponent) * averageProportionInt / count;
-        _stepSize = _isDesc
+        _stepSize = IsDesc
             ? BigFractional.Create(BigInteger.Zero - step, LexoRankManager.BaseNumber, exponent + 1)
             : BigFractional.Create(step, LexoRankManager.BaseNumber, exponent + 1);
-        _lastLexoRankValue = _isDesc
-            ? BigFractional.Create(1, LexoRankManager.BaseNumber, exponent + 1)
+        _lastLexoRankValue = IsDesc
+            ? BigFractional.Create(
+                BigInteger.Pow(LexoRankManager.BaseNumber, exponent + 1),
+                LexoRankManager.BaseNumber,
+                exponent + 1
+            )
             : BigFractional.Create(0, LexoRankManager.BaseNumber, exponent + 1);
 
         IsRebalancing = true;
@@ -86,10 +90,10 @@ public class LexoRankBucketManager
 
     public string GetNewLexoRank()
     {
-        return _isDesc ? GetNewLexoRankDesc() : GetNewLexoRankAsc();
+        return IsDesc ? GetNewLexoRankDesc() : GetNewLexoRankAsc();
     }
 
-    private string GetNewLexoRankDesc()
+    private string GetNewLexoRankAsc()
     {
         var value = _lastLexoRankValue + _stepSize;
         string rank;
@@ -113,7 +117,7 @@ public class LexoRankBucketManager
         return NextBucket + Separator + rank;
     }
 
-    private string GetNewLexoRankAsc()
+    private string GetNewLexoRankDesc()
     {
         var value = _lastLexoRankValue + _stepSize;
         string rank;
@@ -151,7 +155,7 @@ public class LexoRankBucketManager
             Buckets = Buckets,
             CurrentBucket = CurrentBucket,
             NextBucket = NextBucket,
-            IsDesc = _isDesc,
+            IsDesc = IsDesc,
             DenominatorBase = _stepSize.DenominatorBase,
             DenominatorExponent = _stepSize.DenominatorExponent,
             StepSizeNumerator = _stepSize.Numerator.ToString(),
@@ -166,7 +170,7 @@ public class LexoRankBucketManager
         {
             CurrentBucket = state.CurrentBucket,
             NextBucket = state.NextBucket,
-            _isDesc = state.IsDesc,
+            IsDesc = state.IsDesc,
             _stepSize = BigFractional.Create(
                 BigInteger.Parse(state.StepSizeNumerator),
                 state.DenominatorBase,
