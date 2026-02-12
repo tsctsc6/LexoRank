@@ -20,7 +20,9 @@ public class LexoRankBucketManager
 
     private BigFractional _lastLexoRankValue = BigFractional.One;
 
-    private BigFractional _nextLexoRankValue = BigFractional.One;
+    private BigFractional _notSubmitedLexoRankValue = BigFractional.One;
+
+    public bool IsRebalancing { get; private set; } = false;
 
     public LexoRankBucketManager(ReadOnlySpan<char> characterSet, char separator, string[] buckets)
     {
@@ -50,7 +52,7 @@ public class LexoRankBucketManager
         return prevBucketAndRank[0] + Separator + rank;
     }
 
-    public bool Begin(BigInteger count, double averageProportion)
+    public bool BeginRebalance(BigInteger count, double averageProportion)
     {
         var index = Buckets.IndexOf(CurrentBucket);
         if (index == -1)
@@ -74,6 +76,7 @@ public class LexoRankBucketManager
             ? BigFractional.Create(1, LexoRankManager.BaseNumber, exponent + 1)
             : BigFractional.Create(0, LexoRankManager.BaseNumber, exponent + 1);
 
+        IsRebalancing = true;
         return true;
     }
 
@@ -102,7 +105,7 @@ public class LexoRankBucketManager
             );
             rank = LexoRankManager.GetLexoRankStringFromBigFractional(value);
         }
-        _nextLexoRankValue = value;
+        _notSubmitedLexoRankValue = value;
         return NextBucket + Separator + rank;
     }
 
@@ -126,13 +129,13 @@ public class LexoRankBucketManager
             );
             rank = LexoRankManager.GetLexoRankStringFromBigFractional(value);
         }
-        _nextLexoRankValue = value;
+        _notSubmitedLexoRankValue = value;
         return NextBucket + Separator + rank;
     }
 
-    public void Next()
+    public void SubmitNext()
     {
-        _lastLexoRankValue = _nextLexoRankValue;
+        _lastLexoRankValue = _notSubmitedLexoRankValue;
     }
 
     public LexoRankBucketManagerState GetState()
@@ -149,25 +152,34 @@ public class LexoRankBucketManager
             DenominatorExponent = _stepSize.DenominatorExponent,
             StepSizeNumerator = _stepSize.Numerator.ToString(),
             LastLexoRankValueNumerator = _lastLexoRankValue.Numerator.ToString(),
+            IsRebalancing = IsRebalancing,
         };
     }
 
     public static LexoRankBucketManager Create(LexoRankBucketManagerState state)
     {
-        var obj = new LexoRankBucketManager(state.CharacterSet, state.Separator, state.Buckets);
-        obj.CurrentBucket = state.CurrentBucket;
-        obj.NextBucket = state.NextBucket;
-        obj._isDesc = state.IsDesc;
-        obj._stepSize = BigFractional.Create(
-            BigInteger.Parse(state.StepSizeNumerator),
-            state.DenominatorBase,
-            state.DenominatorExponent
-        );
-        obj._lastLexoRankValue = BigFractional.Create(
-            BigInteger.Parse(state.LastLexoRankValueNumerator),
-            state.DenominatorBase,
-            state.DenominatorExponent
-        );
+        var obj = new LexoRankBucketManager(state.CharacterSet, state.Separator, state.Buckets)
+        {
+            CurrentBucket = state.CurrentBucket,
+            NextBucket = state.NextBucket,
+            _isDesc = state.IsDesc,
+            _stepSize = BigFractional.Create(
+                BigInteger.Parse(state.StepSizeNumerator),
+                state.DenominatorBase,
+                state.DenominatorExponent
+            ),
+            _lastLexoRankValue = BigFractional.Create(
+                BigInteger.Parse(state.LastLexoRankValueNumerator),
+                state.DenominatorBase,
+                state.DenominatorExponent
+            ),
+            IsRebalancing = state.IsRebalancing,
+        };
         return obj;
+    }
+
+    public void FinishRebalance()
+    {
+        IsRebalancing = false;
     }
 }

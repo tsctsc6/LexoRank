@@ -12,4 +12,5 @@ public class LexoRankBucketManagerState
     public int DenominatorExponent { get; set; }
     public string StepSizeNumerator { get; set; }
     public string LastLexoRankValueNumerator { get; set; }
+    public bool IsRebalancing { get; set; }
 }
