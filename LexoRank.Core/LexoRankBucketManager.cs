@@ -10,7 +10,7 @@ public class LexoRankBucketManager
 
     public string[] Buckets { get; init; }
 
-    public string CurrentBucket { get; set; } = string.Empty;
+    public string CurrentBucket { get; set; }
 
     public string NextBucket { get; set; } = string.Empty;
 
@@ -29,25 +29,29 @@ public class LexoRankBucketManager
         LexoRankManager = new(characterSet);
         Separator = separator;
         Buckets = buckets;
+        CurrentBucket = buckets[0];
     }
 
     public string Between(string prev, string next)
     {
-        var prevBucketAndRank = prev.Split(Separator);
-        var nextBucketAndRank = next.Split(Separator);
-        if (prevBucketAndRank.Length != 2 || nextBucketAndRank.Length != 2)
+        string[] prevBucketAndRank = [CurrentBucket, ""];
+        if (!string.IsNullOrEmpty(prev))
+            prevBucketAndRank = prev.Split(Separator);
+        string[] nextBucketAndRank = [CurrentBucket, ""];
+        if (!string.IsNullOrEmpty(next))
+            nextBucketAndRank = next.Split(Separator);
+
+        if (
+            prevBucketAndRank.Length != 2
+            || nextBucketAndRank.Length != 2
+            || prevBucketAndRank[0] != nextBucketAndRank[0]
+        )
         {
             throw new ArgumentException(
                 $"Invalid value {nameof(prev)} or {nameof(next)}: {prev}, {next}"
             );
         }
 
-        if (prevBucketAndRank[0] != nextBucketAndRank[0])
-        {
-            throw new ArgumentException(
-                $"Invalid value {nameof(prev)} or {nameof(next)}: {prev}, {next}"
-            );
-        }
         var rank = LexoRankManager.Between(prevBucketAndRank[1], nextBucketAndRank[1]);
         return prevBucketAndRank[0] + Separator + rank;
     }
