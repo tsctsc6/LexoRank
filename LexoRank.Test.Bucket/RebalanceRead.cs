@@ -8,14 +8,25 @@ using Xunit;
 
 namespace LexoRank.Test.Bucket;
 
-public class Rebalance
+public class RebalanceRead : IAsyncLifetime
 {
+    private SqliteConnection connection;
+
+    public async ValueTask InitializeAsync()
+    {
+        connection = new SqliteConnection("DataSource=:memory:");
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await connection.DisposeAsync();
+        GC.SuppressFinalize(this);
+    }
+
     [Fact]
     public async Task Normal()
     {
-        await using var connection = new SqliteConnection("DataSource=:memory:");
-        //await using var connection = new SqliteConnection("DataSource=test.db");
-        await connection.OpenAsync(TestContext.Current.CancellationToken);
         var options = new DbContextOptionsBuilder<MyDbContext>().UseSqlite(connection).Options;
         await using var dbContext = new MyDbContext(options);
         await dbContext.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
@@ -51,9 +62,13 @@ public class Rebalance
         await dbContext.LexoRankData.AddAsync(lexoRankData, TestContext.Current.CancellationToken);
         await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
+        var readThread = new Thread(async () => await ReadThreadAsync());
+
         // Logically here is while(true)
         for (var i = 0; i < 0xff; i++)
         {
+            if (i == 2)
+                readThread.Start();
             await using var transaction = await dbContext.Database.BeginTransactionAsync(
                 IsolationLevel.Serializable,
                 TestContext.Current.CancellationToken
@@ -88,5 +103,21 @@ public class Rebalance
         {
             Assert.StartsWith("1", r.SortingValue);
         }
+    }
+
+    private async Task ReadThreadAsync()
+    {
+        var options = new DbContextOptionsBuilder<MyDbContext>().UseSqlite(connection).Options;
+        await using var dbContext = new MyDbContext(options);
+        await dbContext.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
+
+        var result = await dbContext
+            .Posts.AsNoTracking()
+            .OrderBy(p => p.SortingValue)
+            .ToArrayAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(4, result[0].Id);
+        Assert.Equal(1, result[1].Id);
+        Assert.Equal(3, result[2].Id);
+        Assert.Equal(2, result[3].Id);
     }
 }
