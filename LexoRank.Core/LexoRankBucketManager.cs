@@ -10,9 +10,9 @@ public class LexoRankBucketManager
 
     public string[] Buckets { get; init; }
 
-    public string CurrentBucket { get; set; }
+    public string CurrentBucket { get; private set; }
 
-    public string NextBucket { get; set; } = string.Empty;
+    public string NextBucket { get; private set; } = string.Empty;
 
     public bool IsDesc { get; private set; } = true;
 
@@ -189,5 +189,6 @@ public class LexoRankBucketManager
     public void FinishRebalance()
     {
         IsRebalancing = false;
+        CurrentBucket = NextBucket;
     }
 }
