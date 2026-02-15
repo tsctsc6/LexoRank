@@ -9,7 +9,7 @@ using Xunit;
 
 namespace LexoRank.Test.Bucket.Nested;
 
-public class RebalanceWrite : IAsyncLifetime
+public class RebalanceUpdateRandom : IAsyncLifetime
 {
     private readonly LexoRankBucketManager _lexoRankBucketManager = new LexoRankBucketManager(
         CommonCharacterSets.Digits,
@@ -92,13 +92,13 @@ public class RebalanceWrite : IAsyncLifetime
         await dbContext.LexoRankData.AddAsync(lexoRankData, TestContext.Current.CancellationToken);
         await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var writeThread = new Thread(async () => await WriteThreadAsync());
+        var writeThread = Task.CompletedTask;
 
         // Logically here is while(true)
         for (var i = 0; i < 0xff; i++)
         {
             if (i == 2)
-                writeThread.Start();
+                writeThread = Task.Run(WriteThreadAsync);
             await using var transaction = await dbContext.Database.BeginTransactionAsync(
                 IsolationLevel.RepeatableRead,
                 TestContext.Current.CancellationToken
@@ -118,8 +118,15 @@ public class RebalanceWrite : IAsyncLifetime
             dbContext.LexoRankData.Update(lexoRankData);
 
             await Task.Delay(Random.Shared.Next(0, 50), TestContext.Current.CancellationToken);
-            await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
-            await transaction.CommitAsync(TestContext.Current.CancellationToken);
+            try
+            {
+                await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+                await transaction.CommitAsync(TestContext.Current.CancellationToken);
+            }
+            catch (InvalidOperationException)
+            {
+                continue;
+            }
         }
 
         _lexoRankBucketManager.FinishRebalance();
@@ -134,8 +141,6 @@ public class RebalanceWrite : IAsyncLifetime
         await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
         await transaction2.CommitAsync(TestContext.Current.CancellationToken);
 
-        writeThread.Join();
-
         var result = await dbContext
             .Posts.AsNoTracking()
             .OrderBy(p => p.SortingValue)
@@ -144,6 +149,8 @@ public class RebalanceWrite : IAsyncLifetime
         {
             Assert.StartsWith("1", r.SortingValue);
         }
+
+        await writeThread;
     }
 
     private async Task WriteThreadAsync()
@@ -171,32 +178,16 @@ public class RebalanceWrite : IAsyncLifetime
                     .Posts.AsNoTracking()
                     .SingleAsync(x => x.Id == 4, TestContext.Current.CancellationToken);
 
-                for (var i2 = 0; i2 < 3; i2++)
-                {
-                    try
-                    {
-                        postToUpdate.SortingValue = _lexoRankBucketManager.Between(
-                            string.Empty,
-                            post4.SortingValue
-                        );
-                        break;
-                    }
-                    catch (ArgumentException)
-                    {
-                        await Task.Delay(
-                            Random.Shared.Next(0, 50),
-                            TestContext.Current.CancellationToken
-                        );
-                        if (i2 == 2)
-                            throw;
-                    }
-                }
+                postToUpdate.SortingValue = _lexoRankBucketManager.Between(
+                    string.Empty,
+                    post4.SortingValue
+                );
                 dbContext.Posts.Update(postToUpdate);
                 await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
                 await transaction.CommitAsync(TestContext.Current.CancellationToken);
                 break;
             }
-            catch (InvalidOperationException)
+            catch (Exception e) when (e is InvalidOperationException or ArgumentException)
             {
                 await Task.Delay(Random.Shared.Next(0, 50), TestContext.Current.CancellationToken);
                 if (i1 == 2)
