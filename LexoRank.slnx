@@ -2,6 +2,7 @@
   <Project Path="LexoRank.Benchmark/LexoRank.Benchmark.csproj" />
   <Project Path="LexoRank.Core/LexoRank.Core.csproj" />
   <Project Path="LexoRank.Example/LexoRank.Example.csproj" />
+  <Project Path="LexoRank.Test.Bucket.Nested/LexoRank.Test.Bucket.Nested.csproj" />
   <Project Path="LexoRank.Test.Bucket/LexoRank.Test.Bucket.csproj" />
   <Project Path="LexoRank.Test/LexoRank.Test.csproj" />
 </Solution>

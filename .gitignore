@@ -5,3 +5,4 @@ riderModule.iml
 /_ReSharper.Caches/
 /.idea
 LexoRank.sln.DotSettings.user
+LexoRank.Test.Bucket.Nested/appsettings.Testing.json

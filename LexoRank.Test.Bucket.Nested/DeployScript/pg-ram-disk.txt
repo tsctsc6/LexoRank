@@ -1,0 +1,14 @@
+-- Execute SQL in cmd
+psql -h 127.0.0.1 -p 5432 -U postgres -c "<command>"
+
+-- Create tablespace
+CREATE TABLESPACE ram_tablespace LOCATION 'R:/pg_ram_db';
+
+-- Check tablespace
+SELECT spcname, pg_tablespace_location(oid) FROM pg_tablespace;
+
+-- Create new database in specific tablespace
+CREATE DATABASE <DbName> WITH TABLESPACE = ram_tablespace;
+
+-- delete tablespace
+DROP TABLESPACE ram_tablespace;

@@ -1,0 +1,5 @@
+# In LexoRank.Test.Bucket.Nested folder：
+
+dotnet ef migrations add Initial -c MyDbContext --verbose
+
+dotnet ef database update -c MyDbContext
